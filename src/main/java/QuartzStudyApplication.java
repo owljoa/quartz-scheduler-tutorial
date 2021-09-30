@@ -1,3 +1,4 @@
+import job.DumbJob;
 import job.HelloJob;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -27,6 +28,13 @@ public class QuartzStudyApplication {
           .withIdentity("job1", "group1")
           .build();
 
+      // 작업 정의 시점에 JobDataMap에 데이터 입력
+      JobDetail dumbJob = JobBuilder.newJob(DumbJob.class)
+          .withIdentity("dumbJob", "group1")
+          .usingJobData("jobSays", "Hello World!") // jobSays를 key로 Hello World!를 값으로 데이터 입력
+          .usingJobData("myFloatValue", 3.141f)
+          .build();
+
       // 작업이 바로 시작되고, 매 20초마다 반복되도록 트리거 정의
       Trigger trigger = TriggerBuilder.newTrigger()
           .withIdentity("trigger1", "group1")
@@ -37,7 +45,7 @@ public class QuartzStudyApplication {
           .build();
 
       // job과 trigger를 이용해서 스케줄링
-      scheduler.scheduleJob(job, trigger);
+      scheduler.scheduleJob(dumbJob, trigger);
 
       // 스케줄러 종료 이전에 job이 여러 번 트리거되고 실행되도록 메인 쓰레드 동작 60초간 정지
       Thread.sleep(60000);
