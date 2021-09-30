@@ -1,3 +1,4 @@
+import job.HelloJob;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
