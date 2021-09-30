@@ -1,6 +1,10 @@
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import job.DumbJob;
 import job.HelloJob;
 import org.quartz.JobBuilder;
+import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -34,6 +38,11 @@ public class QuartzStudyApplication {
           .usingJobData("jobSays", "Hello World!") // jobSays를 key로 Hello World!를 값으로 데이터 입력
           .usingJobData("myFloatValue", 3.141f)
           .build();
+      
+      List<Date> dateList = new ArrayList<>();
+      // JobDataMap을 생성해서 미리 만들어둔 리스트 타입의 변수를 입력
+      JobDataMap jobDataMap = new JobDataMap();
+      jobDataMap.put("myStateData", dateList);
 
       // 작업이 바로 시작되고, 매 20초마다 반복되도록 트리거 정의
       Trigger trigger = TriggerBuilder.newTrigger()
@@ -42,6 +51,7 @@ public class QuartzStudyApplication {
           .withSchedule(SimpleScheduleBuilder.simpleSchedule()
               .withIntervalInSeconds(20)
               .repeatForever())
+          .usingJobData(jobDataMap)
           .build();
 
       // job과 trigger를 이용해서 스케줄링
