@@ -1,69 +1,55 @@
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import job.DumbJob;
-import job.HelloJob;
 import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.SchedulerFactory;
 import org.quartz.SimpleScheduleBuilder;
-import org.quartz.Trigger;
+import org.quartz.SimpleTrigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 
 public class QuartzStudyApplication {
 
   public static void main(String[] args) {
+    SchedulerFactory schedulerFactory = new StdSchedulerFactory();
+
     try {
       // Scheduler 인스턴스 생성
-      System.out.println("스케줄러 생성 시작");
-      Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
-      System.out.println("스케줄러 생성 완료");
+      Scheduler scheduler = schedulerFactory.getScheduler();
 
-      // 스케줄러 시작
-      System.out.println("스케줄러 시작");
-      scheduler.start();
-      System.out.println("스케줄러 시작 완료");
-
-      // 작업(Job)을 정의하고 HelloJob class에 바인딩
-      JobDetail job = JobBuilder.newJob(HelloJob.class)
-          .withIdentity("job1", "group1")
-          .build();
-
-      // 작업 정의 시점에 JobDataMap에 데이터 입력
+      // 작업 정의
       JobDetail dumbJob = JobBuilder.newJob(DumbJob.class)
-          .withIdentity("dumbJob", "group1")
-          .usingJobData("jobSays", "Hello World!") // jobSays를 key로 Hello World!를 값으로 데이터 입력
-          .usingJobData("myFloatValue", 3.141f)
+          .withIdentity("dumbJob", "dumbGroup1")
           .build();
-      
-      List<Date> dateList = new ArrayList<>();
-      // JobDataMap을 생성해서 미리 만들어둔 리스트 타입의 변수를 입력
-      JobDataMap jobDataMap = new JobDataMap();
-      jobDataMap.put("myStateData", dateList);
 
-      // 작업이 바로 시작되고, 매 20초마다 반복되도록 트리거 정의
-      Trigger trigger = TriggerBuilder.newTrigger()
-          .withIdentity("trigger1", "group1")
+      // 작업이 바로 시작되고, 3초 간격으로 4회 반복하도록 트리거 정의
+      SimpleTrigger dumbTrigger = TriggerBuilder.newTrigger()
+          .withIdentity("dumbTrigger", "dumbGroup1")
           .startNow()
           .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-              .withIntervalInSeconds(20)
-              .repeatForever())
-          .usingJobData(jobDataMap)
+              .withIntervalInSeconds(3)
+              .withRepeatCount(4))
           .build();
 
-      // job과 trigger를 이용해서 스케줄링
-      scheduler.scheduleJob(dumbJob, trigger);
+      // dumbJob에 초기화 파라미터 전달
+      dumbJob.getJobDataMap().put(DumbJob.JOB_SAYS, "HELLO");
+      dumbJob.getJobDataMap().put(DumbJob.EXECUTION_COUNT, 1);
 
-      // 스케줄러 종료 이전에 job이 여러 번 트리거되고 실행되도록 메인 쓰레드 동작 60초간 정지
-      Thread.sleep(60000);
+      // dumbTrigger에 초기화 파라미터 전달
+      dumbTrigger.getJobDataMap().put(DumbJob.JOB_SAYS, "HELLO DUMB TRIGGER");
+
+      // job과 trigger를 이용해서 스케줄링
+      scheduler.scheduleJob(dumbJob, dumbTrigger);
+
+      // 스케줄러 시작
+      scheduler.start();
+
+      // 스케줄러 종료 이전에 job이 여러 번 트리거되고 실행되도록 메인 쓰레드 동작 일시 정지
+      Thread.sleep(12000);
 
       // 스케줄러 종료
-      System.out.println("스케줄러 종료");
       scheduler.shutdown();
-      System.out.println("스케줄러 종료 완료");
     } catch (SchedulerException | InterruptedException se) {
       se.printStackTrace();
     }
